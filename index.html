@@ -5,15 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Press Start 2P', Arial, sans-serif;
             text-align: center;
             padding: 20px;
             background-color: black;
+            color: white;
         }
+
+        /* 警告画面 */
+        .warning-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: black;
+            z-index: 1000;
+        }
+
+        .warning-content {
+            background-color: #1a1a1a;
+            border: 3px solid white;
+            padding: 30px;
+            max-width: 600px;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+
+        .warning-title {
+            font-size: 14px;
+            color: #ff0000;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .warning-text {
+            font-size: 12px;
+            color: #ffffff;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            text-align: left;
+            word-wrap: break-word;
+        }
+
+        .character-name {
+            font-size: 32px;
+            color: #ffff00;
+            margin: 30px 0;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #ff0000;
+            letter-spacing: 2px;
+        }
+
+        .yes-button {
+            background-color: #ffff00;
+            color: black;
+            border: 2px solid white;
+            padding: 15px 30px;
+            font-size: 12px;
+            font-family: 'Press Start 2P', Arial, sans-serif;
+            cursor: pointer;
+            transition: all 0.1s;
+            letter-spacing: 1px;
+        }
+
+        .yes-button:hover {
+            background-color: #ffffff;
+            transform: scale(1.05);
+        }
+
+        .yes-button:active {
+            transform: scale(0.95);
+        }
+
+        /* キャラ選択画面 */
+        .character-screen {
+            display: none;
+        }
+
+        .character-screen.active {
+            display: block;
+        }
+
         .link-container {
             margin: 20px 0;
         }
+
         a {
             display: inline-block;
             margin: 10px;
@@ -23,45 +103,63 @@
             text-decoration: none;
             border-radius: 5px;
         }
+
         a:hover {
             background-color: #45a049;
         }
 
-        h1{
+        h1 {
             color: white;
+            font-size: 16px;
         }
     </style>
 </head>
-<body>
-    <script>
-alert("キミ よっぽどヒマなんだね。")
-    </script>
-
 
 <audio src="music/Startmenu.mp3" autoplay loop muted playsinline></audio>
-    <script>
-  // ミュート状態で自動再生 → 再生後にミュート解除（自動再生ブロック対策）
-  window.addEventListener('load', function () {
-    var audio = document.querySelector('audio');
-    audio.play().then(function () {
-      audio.muted = false;
-    }).catch(function () {
-      // 自動再生がブロックされた場合、最初のクリックで再生
-      document.addEventListener('click', function () {
-        audio.muted = false;
-        audio.play();
-      }, { once: true });
-    });
-  });
-</script>
 
-
-
-    <h1>相手を選んでください</h1>
-    <div class="link-container">
-        <a href="sans/sans.html">Sans</a>
-        <a href="papyrus/papyrus.html">Papyrus</a>
-        <a href="undyne/undyne.html">Undyne</a>
+    <!-- 警告画面 -->
+    <div class="warning-screen" id="warningScreen">
+        <div class="warning-content">
+            <div class="warning-title">けいこく</div>
+            <div class="warning-text">
+                このなまえはじごくへの　いりぐち・・・<br>
+                このままはじめますか？
+            </div>
+            <div class="character-name">フリスク</div>
+            <button class="yes-button" id="yesButton">はい</button>
+        </div>
     </div>
+
+    <!-- キャラ選択画面 -->
+    <div class="character-screen" id="characterScreen">
+        <h1>相手を選んでください</h1>
+        <div class="link-container">
+            <a href="sans/sans.html">Sans</a>
+            <a href="papyrus/papyrus.html">Papyrus</a>
+            <a href="undyne/undyne.html">Undyne</a>
+        </div>
+    </div>
+
+    <script>
+        // ミュート状態で自動再生 → 再生後にミュート解除（自動再生ブロック対策）
+        window.addEventListener('load', function () {
+            var audio = document.querySelector('audio');
+            audio.play().then(function () {
+                audio.muted = false;
+            }).catch(function () {
+                // 自動再生がブロックされた場合、最初のクリックで再生
+                document.addEventListener('click', function () {
+                    audio.muted = false;
+                    audio.play();
+                }, { once: true });
+            });
+        });
+
+        // はいボタンクリックイベント
+        document.getElementById('yesButton').addEventListener('click', function () {
+            document.getElementById('warningScreen').style.display = 'none';
+            document.getElementById('characterScreen').classList.add('active');
+        });
+    </script>
 </body>
 </html>
