@@ -17,49 +17,27 @@
         }
 
         /* 警告画面 */
-        .warning-screen {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: black;
-            z-index: 1000;
-        }
-
-        .warning-content {
-            background-color: black;
+        #warningScreen {
+            display: block;
+            text-align: center;
             padding: 60px 80px;
-            width: 90vw;
-            height: 80vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
 
-        .warning-title {
-            font-size: 32px;
-            color: #ffffff;
+        #warningScreen h1 {
+            font-size: 36px;
             margin-bottom: 40px;
-            letter-spacing: 2px;
         }
 
-        .warning-text {
+        #warningScreen p {
             font-size: 24px;
-            color: #ffffff;
-            line-height: 2.5;
+            line-height: 2;
             margin-bottom: 60px;
-            letter-spacing: 1px;
-            text-align: left;
-            word-wrap: break-word;
         }
 
-        .character-name {
-            font-size: 64px;
-            color: #ffffff;
-            margin: 60px 0;
+        #characterName {
+            font-size: 74px;
+            margin: 70px 0;
             font-weight: bold;
-            letter-spacing: 2px;
         }
 
         .yes-button {
@@ -84,11 +62,11 @@
         }
 
         /* キャラ選択画面 */
-        .character-screen {
+        #characterScreen {
             display: none;
         }
 
-        .character-screen.active {
+        #characterScreen.active {
             display: block;
         }
 
@@ -112,7 +90,7 @@
 
         h1 {
             color: white;
-            font-size: 16px;
+            font-size: 50px
         }
     </style>
 </head>
@@ -120,20 +98,15 @@
 <audio src="music/Startmenu.mp3" autoplay loop muted playsinline></audio>
 
     <!-- 警告画面 -->
-    <div class="warning-screen" id="warningScreen">
-        <div class="warning-content">
-            <div class="warning-title">けいこく</div>
-            <div class="warning-text">
-                このなまえはじごくへの　いりぐち・・・<br>
-                このままはじめますか？
-            </div>
-            <div class="character-name">フリスク</div>
-            <button class="yes-button" id="yesButton">はい</button>
-        </div>
+    <div id="warningScreen">
+        <h1>けいこく　このなまえはじごくへの　いりぐち・・・<br>
+        このままはじめますか？</h1>
+        <h1 id="characterName">フリスク</h1>
+        <button class="yes-button" id="yesButton">はい</button>
     </div>
 
     <!-- キャラ選択画面 -->
-    <div class="character-screen" id="characterScreen">
+    <div id="characterScreen">
         <h1>相手を選んでください</h1>
         <div class="link-container">
             <a href="sans/sans.html">Sans</a>
