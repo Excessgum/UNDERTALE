@@ -33,7 +33,27 @@
     </style>
 </head>
 <body>
+
+　// 音楽関係
     <audio src="music/Startmenu.mp3" autoplay loop muted playsinline></audio>
+    <script>
+  // ミュート状態で自動再生 → 再生後にミュート解除（自動再生ブロック対策）
+  window.addEventListener('load', function () {
+    var audio = document.querySelector('audio');
+    audio.play().then(function () {
+      audio.muted = false;
+    }).catch(function () {
+      // 自動再生がブロックされた場合、最初のクリックで再生
+      document.addEventListener('click', function () {
+        audio.muted = false;
+        audio.play();
+      }, { once: true });
+    });
+  });
+</script>
+
+
+
     <h1>相手を選んでください</h1>
     <div class="link-container">
         <a href="sans/sans.html">Sans</a>
