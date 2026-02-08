@@ -72,7 +72,8 @@
 
 
 <body>
-    <audio src="../music/gameover.mp3" autoplay loop muted playsinline></audio>
+    <audio id="bgm" src="../music/gameover.mp3" loop playsinline></audio>
+
     <main class="screen">
         <h1 id="gameover" class="gameover-title">GAME<br>OVER</h1>
         <p id="line1" class="story-line" aria-live="polite"></p>
@@ -139,6 +140,16 @@
                 choicesEl.classList.add("is-visible");
             }
         });
+
+        const bgm = document.getElementById("bgm");
+
+const startBgm = () => {
+    bgm.play().catch(() => {});
+};
+
+document.addEventListener("keydown", startBgm, { once: true });
+document.addEventListener("click", startBgm, { once: true });
+
     </script>
 </body>
 </html>
