@@ -29,6 +29,9 @@
             padding: 24px;
             box-sizing: border-box;
         }
+        .screen.is-hidden {
+            display: none;
+        }
         .gameover-title {
             font-family: var(--sans-font);
             font-size: min(21vw, 23.8vh);
@@ -66,6 +69,17 @@
             outline: none;
             box-shadow: none;
         }
+        .intro-video {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            background: #000;
+        }
+        .intro-video.is-hidden {
+            display: none;
+        }
     </style>
 </head>
 
@@ -73,8 +87,9 @@
 
 <body>
     <audio id="bgm" src="../music/gameover.mp3" loop playsinline></audio>
+    <video id="introVideo" class="intro-video" src="../material/soulbreak.mp4" autoplay loop playsinline></video>
 
-    <main class="screen">
+    <main class="screen is-hidden">
         <h1 id="gameover" class="gameover-title">GAME<br>OVER</h1>
         <p id="line1" class="story-line" aria-live="polite"></p>
         <p id="line2" class="story-line" aria-live="polite"></p>
@@ -85,17 +100,33 @@
     </main>
 
     <script>
+        const introVideo = document.getElementById("introVideo");
+        const screenEl = document.querySelector(".screen");
+
         const line1Text = "われわれの　うんめいが\nかかっている・・・";
         const line2Text = "フリスク！　ケツイを\nちからに　かえるんだ！";
         const line1El = document.getElementById("line1");
         const choicesEl = document.querySelector(".choices");
 
+        let started = false;
         let line1Done = false;
         let line2Started = false;
         let line2Done = false;
         let enterQueued = false;
 
-        const typeText = (el, text, speed = 40) => new Promise((resolve) => {
+        const tryPlayVideo = async () => {
+            try {
+                introVideo.muted = false;
+                await introVideo.play();
+            } catch {
+                introVideo.muted = true;
+                try { await introVideo.play(); } catch {}
+            }
+        };
+
+        tryPlayVideo();
+
+        const typeText = (el, text, speed = 20) => new Promise((resolve) => {
             let i = 0;
             const timer = setInterval(() => {
                 if (i >= text.length) {
@@ -121,13 +152,24 @@
             });
         };
 
-        typeText(line1El, line1Text).then(() => {
-            line1Done = true;
-            if (enterQueued) startLine2();
-        });
+        const startLine1 = () => {
+            typeText(line1El, line1Text).then(() => {
+                line1Done = true;
+                if (enterQueued) startLine2();
+            });
+        };
 
         document.addEventListener("keydown", (e) => {
             if (e.key !== "Enter") return;
+
+            if (!started) {
+                started = true;
+                introVideo.classList.add("is-hidden");
+                screenEl.classList.remove("is-hidden");
+                startLine1();
+                return;
+            }
+
             if (!line1Done) {
                 enterQueued = true;
                 return;
