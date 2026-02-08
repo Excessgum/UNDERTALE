@@ -74,9 +74,6 @@
             z-index: 100;
         }
 
-        .yes-button:hover {
-        }
-
         .yes-button:active {
             transform: scale(0.95);
         }
@@ -165,6 +162,10 @@
 
         // はいボタンクリックイベント
         document.getElementById('yesButton').addEventListener('click', function () {
+            var nameEl = document.getElementById('characterName');
+            if (nameEl) {
+                nameEl.style.animation = 'none';
+            }
             document.getElementById('warningScreen').style.display = 'none';
             document.getElementById('characterScreen').classList.add('active');
         });
