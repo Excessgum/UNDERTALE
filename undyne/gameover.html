@@ -5,16 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game over</title>
     <style>
-        @font-face {
-            font-family: "sans";
-            src: url("../fonts/sans.ttf") format("truetype");
-            font-display: swap;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
 
         :root {
             /* 既存CSSがあれば上書きされる想定 */
-            --sans-font: "sans", sans-serif;
-            --warning-font: inherit;
+            --sans-font: "Press Start 2P", sans-serif;
+            --warning-font: "DotGothic16", sans-serif;
         }
         body {
             background: #000;
@@ -23,6 +20,7 @@
             display: grid;
             place-items: center;
             min-height: 100vh;
+            font-family: var(--sans-font);
         }
         .screen {
             text-align: center;
@@ -38,6 +36,7 @@
             margin: 0 0 16px;
         }
         .story-line {
+            font-family: var(--warning-font);
             font-size: 20px;
             margin: 8px 0;
             min-height: 1.6em;
@@ -48,6 +47,10 @@
             gap: 16px;
             justify-content: center;
             flex-wrap: wrap;
+            visibility: hidden;
+        }
+        .choices.is-visible {
+            visibility: visible;
         }
         .choice {
             font-family: var(--warning-font);
@@ -65,6 +68,9 @@
         }
     </style>
 </head>
+
+<audio src="../music/gameover.mp3" autoplay loop muted playsinline></audio>
+
 <body>
     <main class="screen">
         <h1 id="gameover" class="gameover-title">GAME<br>OVER</h1>
@@ -80,9 +86,11 @@
         const line1Text = "われわれの　うんめいが\nかかっている・・・";
         const line2Text = "フリスク！　ケツイを\nちからに　かえるんだ！";
         const line1El = document.getElementById("line1");
+        const choicesEl = document.querySelector(".choices");
 
         let line1Done = false;
         let line2Started = false;
+        let line2Done = false;
         let enterQueued = false;
 
         const typeText = (el, text, speed = 40) => new Promise((resolve) => {
@@ -106,7 +114,9 @@
             if (line2Started) return;
             line2Started = true;
             line1El.textContent = "";
-            typeText(line1El, line2Text);
+            typeText(line1El, line2Text).then(() => {
+                line2Done = true;
+            });
         };
 
         typeText(line1El, line1Text).then(() => {
@@ -120,7 +130,13 @@
                 enterQueued = true;
                 return;
             }
-            startLine2();
+            if (!line2Started) {
+                startLine2();
+                return;
+            }
+            if (line2Done) {
+                choicesEl.classList.add("is-visible");
+            }
         });
     </script>
 </body>
