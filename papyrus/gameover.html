@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="jp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game over</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
+        :root {
+            /* 既存CSSがあれば上書きされる想定 */
+            --sans-font: "Press Start 2P", sans-serif;
+            --warning-font: "DotGothic16", sans-serif;
+        }
+        body {
+            background: #000;
+            color: #fff;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            font-family: var(--sans-font);
+        }
+        .screen {
+            text-align: center;
+            width: 100%;
+            max-width: 960px;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+        .screen.is-hidden {
+            display: none;
+        }
+        .gameover-title {
+            font-family: var(--sans-font);
+            font-size: min(21vw, 23.8vh);
+            line-height: 1.1;
+            margin: 0 0 16px;
+        }
+        .story-line {
+            font-family: var(--warning-font);
+            font-size: 20px;
+            margin: 8px 0;
+            min-height: 1.6em;
+        }
+        .choices {
+            margin-top: 24px;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            visibility: hidden;
+        }
+        .choices.is-visible {
+            visibility: visible;
+        }
+        .choice {
+            font-family: var(--warning-font);
+            color: #fff;
+            text-decoration: none;
+            border: none;
+            padding: 8px 16px;
+            background: #000;
+            display: inline-block;
+        }
+        .choice:focus,
+        .choice:hover {
+            outline: none;
+            box-shadow: none;
+        }
+        .intro-video {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            background: #000;
+        }
+        .intro-video.is-hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+
+
+<body>
+    <audio id="bgm" src="../music/gameover.mp3" loop playsinline></audio>
+    <video id="introVideo" class="intro-video" src="../material/soulbreak.mp4" autoplay playsinline></video>
+
+    <main class="screen is-hidden">
+        <h1 id="gameover" class="gameover-title">GAME<br>OVER</h1>
+        <p id="line1" class="story-line" aria-live="polite"></p>
+        <p id="line2" class="story-line" aria-live="polite"></p>
+        <div class="choices">
+            <a class="choice" href="papyrus.html">こわれるもんか。</a>
+            <a class="choice" href="../index.html">本当のリセット</a>
+        </div>
+    </main>
+
+    <script>
+        const introVideo = document.getElementById("introVideo");
+        const screenEl = document.querySelector(".screen");
+
+        const line1Text = "あきらめては　ダメだ！";
+        const line2Text = "フリスク！　ケツイを\nちからに　かえるんだ・・・";
+        const line1El = document.getElementById("line1");
+        const choicesEl = document.querySelector(".choices");
+
+        let started = false;
+        let line1Done = false;
+        let line2Started = false;
+        let line2Done = false;
+        let enterQueued = false;
+
+        const tryPlayVideo = async () => {
+            try {
+                introVideo.muted = false;
+                await introVideo.play();
+            } catch {
+                introVideo.muted = true;
+                try { await introVideo.play(); } catch {}
+            }
+        };
+
+        tryPlayVideo();
+
+        introVideo.addEventListener("ended", () => {
+            introVideo.classList.add("is-hidden");
+        });
+
+        const typeText = (el, text, speed = 100) => new Promise((resolve) => {
+            let i = 0;
+            const timer = setInterval(() => {
+                if (i >= text.length) {
+                    clearInterval(timer);
+                    resolve();
+                    return;
+                }
+                const ch = text[i++];
+                if (ch === "\n") {
+                    el.appendChild(document.createElement("br"));
+                } else {
+                    el.append(ch);
+                }
+            }, speed);
+        });
+
+        const startLine2 = () => {
+            if (line2Started) return;
+            line2Started = true;
+            line1El.textContent = "";
+            typeText(line1El, line2Text).then(() => {
+                line2Done = true;
+            });
+        };
+
+        const startLine1 = () => {
+            typeText(line1El, line1Text).then(() => {
+                line1Done = true;
+                if (enterQueued) startLine2();
+            });
+        };
+
+        const handleAdvance = () => {
+            if (!started) {
+                started = true;
+                introVideo.classList.add("is-hidden");
+                screenEl.classList.remove("is-hidden");
+                startLine1();
+                return;
+            }
+
+            if (!line1Done) {
+                enterQueued = true;
+                return;
+            }
+            if (!line2Started) {
+                startLine2();
+                return;
+            }
+            if (line2Done) {
+                choicesEl.classList.add("is-visible");
+            }
+        };
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter") return;
+            handleAdvance();
+        });
+
+        document.addEventListener("click", () => {
+            handleAdvance();
+        });
+
+        const bgm = document.getElementById("bgm");
+
+const startBgm = () => {
+    bgm.play().catch(() => {});
+};
+
+document.addEventListener("keydown", startBgm, { once: true });
+document.addEventListener("click", startBgm, { once: true });
+
+    </script>
+</body>
+</html>
