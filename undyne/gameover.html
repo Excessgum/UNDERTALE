@@ -4,10 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game over</title>
+    <style>
+        :root {
+            /* 既存CSSがあれば上書きされる想定 */
+            --sans-font: inherit;
+            --warning-font: inherit;
+        }
+        body {
+            background: #000;
+            color: #fff;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+        }
+        .screen {
+            text-align: center;
+            width: 100%;
+            max-width: 960px;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+        .gameover-title {
+            font-family: var(--sans-font);
+            font-size: min(40vw, 45vh);
+            line-height: 0.85;
+            margin: 0 0 16px;
+        }
+        .story-line {
+            font-size: 20px;
+            margin: 8px 0;
+            min-height: 1.6em;
+        }
+        .choices {
+            margin-top: 24px;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .choice {
+            font-family: var(--warning-font);
+            color: #fff;
+            text-decoration: none;
+            border: 2px solid #fff;
+            padding: 8px 16px;
+            background: #000;
+            display: inline-block;
+        }
+        .choice:focus,
+        .choice:hover {
+            outline: none;
+            box-shadow: 0 0 0 2px #fff inset;
+        }
+    </style>
 </head>
 <body>
-    <h1>GAME<br>OVER</h1>
-    <h2>われわれの　うんめいが<br>かかっている・・・</h2>
-    <h2>フリスク！　ケツイを<br>ちからに　かえるんだ！</h2>
+    <main class="screen">
+        <h1 id="gameover" class="gameover-title">GAME<br>OVER</h1>
+        <p id="line1" class="story-line" aria-live="polite"></p>
+        <p id="line2" class="story-line" aria-live="polite"></p>
+        <div class="choices">
+            <a class="choice" href="undyne.html">こわれるもんか。</a>
+            <a class="choice" href="undyne/undyne.html">本当のリセット</a>
+        </div>
+    </main>
+
+    <script>
+        const line1Text = "われわれの　うんめいが\nかかっている・・・";
+        const line2Text = "フリスク！　ケツイを\nちからに　かえるんだ！";
+        const line1El = document.getElementById("line1");
+        const line2El = document.getElementById("line2");
+
+        let line1Done = false;
+        let line2Started = false;
+        let enterQueued = false;
+
+        const typeText = (el, text, speed = 40) => new Promise((resolve) => {
+            let i = 0;
+            const timer = setInterval(() => {
+                if (i >= text.length) {
+                    clearInterval(timer);
+                    resolve();
+                    return;
+                }
+                const ch = text[i++];
+                if (ch === "\n") {
+                    el.appendChild(document.createElement("br"));
+                } else {
+                    el.append(ch);
+                }
+            }, speed);
+        });
+
+        const startLine2 = () => {
+            if (line2Started) return;
+            line2Started = true;
+            typeText(line2El, line2Text);
+        };
+
+        typeText(line1El, line1Text).then(() => {
+            line1Done = true;
+            if (enterQueued) startLine2();
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter") return;
+            if (!line1Done) {
+                enterQueued = true;
+                return;
+            }
+            startLine2();
+        });
+    </script>
 </body>
 </html>
