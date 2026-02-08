@@ -7,7 +7,7 @@
     <style>
         :root {
             /* 既存CSSがあれば上書きされる想定 */
-            --sans-font: inherit;
+            --sans-font: 'sans', sans-serif;
             --warning-font: inherit;
         }
         body {
@@ -27,7 +27,7 @@
         }
         .gameover-title {
             font-family: var(--sans-font);
-            font-size: min(40vw, 45vh);
+            font-size: min(30vw, 34vh);
             line-height: 0.85;
             margin: 0 0 16px;
         }
@@ -47,7 +47,7 @@
             font-family: var(--warning-font);
             color: #fff;
             text-decoration: none;
-            border: 2px solid #fff;
+            border: none;
             padding: 8px 16px;
             background: #000;
             display: inline-block;
@@ -55,7 +55,7 @@
         .choice:focus,
         .choice:hover {
             outline: none;
-            box-shadow: 0 0 0 2px #fff inset;
+            box-shadow: none;
         }
     </style>
 </head>
@@ -74,7 +74,6 @@
         const line1Text = "われわれの　うんめいが\nかかっている・・・";
         const line2Text = "フリスク！　ケツイを\nちからに　かえるんだ！";
         const line1El = document.getElementById("line1");
-        const line2El = document.getElementById("line2");
 
         let line1Done = false;
         let line2Started = false;
@@ -100,7 +99,8 @@
         const startLine2 = () => {
             if (line2Started) return;
             line2Started = true;
-            typeText(line2El, line2Text);
+            line1El.textContent = "";
+            typeText(line1El, line2Text);
         };
 
         typeText(line1El, line1Text).then(() => {
