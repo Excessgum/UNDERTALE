@@ -74,8 +74,10 @@
             z-index: 100;
         }
 
-        .yes-button:active {
-            transform: none;
+        .yes-button:active,
+        .yes-button:focus {
+            transform: translateX(-50%);
+            outline: none;
         }
 
         /* キャラ選択画面 */
