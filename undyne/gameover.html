@@ -163,9 +163,7 @@
             });
         };
 
-        document.addEventListener("keydown", (e) => {
-            if (e.key !== "Enter") return;
-
+        const handleAdvance = () => {
             if (!started) {
                 started = true;
                 introVideo.classList.add("is-hidden");
@@ -185,6 +183,15 @@
             if (line2Done) {
                 choicesEl.classList.add("is-visible");
             }
+        };
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter") return;
+            handleAdvance();
+        });
+
+        document.addEventListener("click", () => {
+            handleAdvance();
         });
 
         const bgm = document.getElementById("bgm");
