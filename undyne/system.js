@@ -16,27 +16,31 @@ const BOX_SIZE = 150; // 戦闘エリアのサイズ
 const BOX_X = canvas.width / 2 - BOX_SIZE / 2;
 const BOX_Y = canvas.height / 2 - BOX_SIZE / 2;
 const HEART_SIZE = 20; // ハートのサイズ
-const SHIELD_WIDTH = 50; // 盾の幅（横棒）
-const SHIELD_HEIGHT = 10; // 盾の高さ（横棒）
+const SHIELD_LENGTH = 60; // 盾の長さ
+const SHIELD_THICKNESS = 12; // 盾の厚さ
 const ARROW_SIZE = 30; // 矢印のサイズ
 const ARROW_SPEED = 3; // 矢印の速度
-const SHIELD_SPEED = 5; // 盾の移動速度
 const ARROW_COUNT = 20; // 矢印の総数
 const CLOSEST_THRESHOLD = 80; // 一番近いと判定する距離
+const MAX_HP = 56; // 最大HP
+const DAMAGE = 7; // 矢印1回のダメージ
 
 // ========================================
 // ゲーム状態の管理
 // ========================================
+let hp = MAX_HP; // 現在のHP
+
 let heart = {
     x: canvas.width / 2,
     y: canvas.height / 2
 };
 
+// 盾の方向: 'up', 'left', 'down', 'right'
 let shield = {
-    x: canvas.width / 2,
-    y: canvas.height / 2 - 80,
-    vx: 0,
-    vy: 0
+    direction: 'up', // 初期方向は上
+    x: 0,
+    y: 0,
+    rotation: 0 // 回転角度（ラジアン）
 };
 
 let arrows = [];
@@ -46,7 +50,10 @@ let spawnTimer = 0;
 // キー入力の状態
 let keys = {
     w: false,
-    a: false,
+  
+
+// 最後に押されたキー
+let lastKeyPressed = 'w';  a: false,
     s: false,
     d: false
 };
@@ -74,7 +81,10 @@ images.arrow02.src = '../material/undyne/02.png';
 images.arrow03.src = '../material/undyne/03.png';
 images.arrow04.src = '../material/undyne/04.png';
 
-// ========================================
+// =====if (!keys[key]) { // キーが新しく押された時のみ
+            keys[key] = true;
+            lastKeyPressed = key;
+        }==================
 // キーボード入力の処理
 // ========================================
 document.addEventListener('keydown', (e) => {
@@ -101,7 +111,9 @@ function createArrow() {
         x: 0,
         y: 0,
         vx: 0,
-        vy: 0
+        vy: 0,
+        hit: false, // 当たり判定フラグ
+        blocked: false // 盾でブロックされたか
     };
 
     // 方向に応じた初期位置と速度を設定
@@ -155,36 +167,133 @@ function getClosestArrowByDirection() {
     arrows.forEach(arrow => {
         const dist = getDistance(arrow.x, arrow.y, shield.x, shield.y);
         if (dist < minDist[arrow.direction]) {
-            minDist[arrow.direction] = dist;
-            closest[arrow.direction] = arrow;
-        }
-    });
-
-    return closest;
+         （4方向固定）
+// ========================================
+function updateShield() {
+    // 最後に押されたキーに基づいて盾の方向を決定
+    if (lastKeyPressed === 'w') {
+        shield.direction = 'up';
+        shield.x = BOX_X + BOX_SIZE / 2;
+        shield.y = BOX_Y - SHIELD_THICKNESS / 2;
+        shield.rotation = 0; // 横棒
+    } else if (lastKeyPressed === 'a') {
+        shield.direction = 'left';
+        shield.x = BOX_X - SHIELD_THICKNESS / 2;
+        shield.y = BOX_Y + BOX_SIZE / 2;
+        shield.rotation = Math.PI / 2; // 90度回転（縦棒）
+    } else if (lastKeyPressed === 's') {
+        shield.direction = 'down';
+        shield.x = BOX_X + BOX_SIZE / 2;
+        shield.y = BOX_Y + BOX_SIZE + SHIELD_THICKNESS / 2;
+        shield.rotation = 0; // 横棒
+    } else if (lastKeyPressed === 'd') {
+        shield.direction = 'right';
+        shield.x = BOX_X + BOX_SIZE + SHIELD_THICKNESS / 2;
+        shield.y = BOX_Y + BOX_SIZE / 2;
+        shield.rotation = Math.PI / 2; // 90度回転（縦棒）
+    }
 }
 
 // ========================================
-// 盾の更新処理
+// 矢印と盾の当たり判定
 // ========================================
-function updateShield() {
-    // WASDキーに基づいて盾を移動
-    shield.vx = 0;
-    shield.vy = 0;
+function checkArrowShieldCollision(arrow) {
+    // 盾の当たり判定範囲を計算
+    let shieldLeft, shieldRight, shieldTop, shieldBottom;
+    
+    if (shielと当たり判定
+    arrows.forEach(arrow => {
+        if (!arrow.hit) { // まだ処理されていない矢印のみ
+            arrow.x += arrow.vx;
+            arrow.y += arrow.vy;
+            
+            // 盾との当たり判定
+            if (checkArrowShieldCollision(arrow)) {
+                arrow.hit = true; // 盾に当たった
+                arrow.blocked = true;
+            }
+            // ハートとの当たり判定（盾に当たっていない場合）
+            else if (checkArrowHeartCollision(arrow)) {
+                arrow.hit = true; // ハートに当たった
+                arrow.blocked = false;
+                hp -= DAMAGE; // HPを減らす
+                if (hp < 0) hp = 0;
+            }
+        }
+    });
 
-    if (keys.w) shield.vy = -SHIELD_SPEED;
-    if (keys.s) shield.vy = SHIELD_SPEED;
-    if (keys.a) shield.vx = -SHIELD_SPEED;
-    if (keys.d) shield.vx = SHIELD_SPEED;
+    // 画面外に出た矢印または当たった矢印を削除
+    arrows = arrows.filter(arrow => {
+        if (arrow.hit) return false; // 当たった矢印は削除
+        shieldLeft = shield.x - SHIELD_THICKNESS / 2;
+        shieldRight = shield.x + SHIELD_THICKNESS / 2;
+        shieldTop = shield.y - SHIELD_LENGTH / 2;
+        shieldBottom = shield.y + SHIELD_LENGTH / 2;
+    }
+    
+    // 矢印の当たり判定範囲
+    const arrowLeft = arrow.x - ARROW_SIZE / 2;
+    const arrowRight = arrow.x + ARROW_SIZE / 2;
+    const arrowTop = arrow.y - ARROW_SIZE / 2;
+    const arrowBottom = arrow.y + ARROW_SIZE / 2;
+    
+    // 矩形同士の衝突判定
+    return !(arrowRight < shieldLeft || 
+             arrowLeft > shieldRight || 
+             arrowBottom < shieldTop || 
+             arrowTop > shieldBottom);
+}
 
-    shield.x += shield.vx;
-    shield.y += shield.vy;
+// ========================================
+// 矢印とハートの当たり判定
+// ========================================
+function checkArrowHeartCollision(arrow) {
+    // ハートの当たり判定範囲（箱の内部）
+    const heartLeft = BOX_X;
+    const heartRight = BOX_X + BOX_SIZE;
+    const heartTop = BOX_Y;
+    const heartBottom = BOX_Y + BOX_SIZE;
+    回転あり）
+    ctx.save();
+    ctx.translate(shield.x, shield.y);
+    ctx.rotate(shield.rotation);
+    ctx.fillStyle = '#00ffff'; // 水色
+    ctx.fillRect(-SHIELD_LENGTH/2, -SHIELD_THICKNESS/2, SHIELD_LENGTH, SHIELD_THICKNESS);
+    ctx.strokeStyle = '#ffffff'; // 白い枠線
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-SHIELD_LENGTH/2, -SHIELD_THICKNESS/2, SHIELD_LENGTH, SHIELD_THICKNESS);
+    ctx.restore();
 
-    // 戦闘エリアの外側に制限（盾は箱の周りを移動）
-    const boxLeft = BOX_X - SHIELD_WIDTH;
-    const boxRight = BOX_X + BOX_SIZE + SHIELD_WIDTH;
-    const boxTop = BOX_Y - SHIELD_HEIGHT;
-    const boxBottom = BOX_Y + BOX_SIZE + SHIELD_HEIGHT;
-
+    // HPバーを描画
+    const hpBarWidth = 200;
+    const hpBarHeight = 20;
+    const hpBarX = canvas.width / 2 - hpBarWidth / 2;
+    const hpBarY = 50;
+    
+    // HPバーの背景
+    ctx.fillStyle = '#800000';
+    ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+    
+    // 現在のHP
+    const hpWidth = (hp / MAX_HP) * hpBarWidth;
+    ctx.fillStyle = '#ffff00'; // 黄色
+    ctx.fillRect(hpBarX, hpBarY, hpWidth, hpBarHeight);
+    
+    // HPバーの枠線
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+    
+    // HP数値表示
+    ctx.fillStyle = 'white';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${hp} / ${MAX_HP}`, canvas.width / 2, hpBarY - 10);
+    
+    // デバッグ情報を表示
+    ctx.textAlign = 'left';
+    ctx.fillText(`Arrows: ${arrows.length}/${ARROW_COUNT}`, 10, 30);
+    ctx.fillText(`Shield: ${shield.direction}`, 10, 5
     if (shield.x < boxLeft) shield.x = boxLeft;
     if (shield.x > boxRight - SHIELD_WIDTH) shield.x = boxRight - SHIELD_WIDTH;
     if (shield.y < boxTop) shield.y = boxTop;
