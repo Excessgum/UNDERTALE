@@ -50,13 +50,13 @@ let spawnTimer = 0;
 // キー入力の状態
 let keys = {
     w: false,
-  
-
-// 最後に押されたキー
-let lastKeyPressed = 'w';  a: false,
+    a: false,
     s: false,
     d: false
 };
+
+// 最後に押されたキー
+let lastKeyPressed = 'w';
 
 // ========================================
 // 画像リソースの読み込み
@@ -81,16 +81,16 @@ images.arrow02.src = '../material/undyne/02.png';
 images.arrow03.src = '../material/undyne/03.png';
 images.arrow04.src = '../material/undyne/04.png';
 
-// =====if (!keys[key]) { // キーが新しく押された時のみ
-            keys[key] = true;
-            lastKeyPressed = key;
-        }==================
+// ========================================
 // キーボード入力の処理
 // ========================================
 document.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     if (keys.hasOwnProperty(key)) {
-        keys[key] = true;
+        if (!keys[key]) { // キーが新しく押された時のみ
+            keys[key] = true;
+            lastKeyPressed = key;
+        }
     }
 });
 
@@ -167,7 +167,16 @@ function getClosestArrowByDirection() {
     arrows.forEach(arrow => {
         const dist = getDistance(arrow.x, arrow.y, shield.x, shield.y);
         if (dist < minDist[arrow.direction]) {
-         （4方向固定）
+            minDist[arrow.direction] = dist;
+            closest[arrow.direction] = arrow;
+        }
+    });
+
+    return closest;
+}
+
+// ========================================
+// 盾の更新処理（4方向固定）
 // ========================================
 function updateShield() {
     // 最後に押されたキーに基づいて盾の方向を決定
@@ -201,30 +210,14 @@ function checkArrowShieldCollision(arrow) {
     // 盾の当たり判定範囲を計算
     let shieldLeft, shieldRight, shieldTop, shieldBottom;
     
-    if (shielと当たり判定
-    arrows.forEach(arrow => {
-        if (!arrow.hit) { // まだ処理されていない矢印のみ
-            arrow.x += arrow.vx;
-            arrow.y += arrow.vy;
-            
-            // 盾との当たり判定
-            if (checkArrowShieldCollision(arrow)) {
-                arrow.hit = true; // 盾に当たった
-                arrow.blocked = true;
-            }
-            // ハートとの当たり判定（盾に当たっていない場合）
-            else if (checkArrowHeartCollision(arrow)) {
-                arrow.hit = true; // ハートに当たった
-                arrow.blocked = false;
-                hp -= DAMAGE; // HPを減らす
-                if (hp < 0) hp = 0;
-            }
-        }
-    });
-
-    // 画面外に出た矢印または当たった矢印を削除
-    arrows = arrows.filter(arrow => {
-        if (arrow.hit) return false; // 当たった矢印は削除
+    if (shield.direction === 'up' || shield.direction === 'down') {
+        // 横棒
+        shieldLeft = shield.x - SHIELD_LENGTH / 2;
+        shieldRight = shield.x + SHIELD_LENGTH / 2;
+        shieldTop = shield.y - SHIELD_THICKNESS / 2;
+        shieldBottom = shield.y + SHIELD_THICKNESS / 2;
+    } else {
+        // 縦棒
         shieldLeft = shield.x - SHIELD_THICKNESS / 2;
         shieldRight = shield.x + SHIELD_THICKNESS / 2;
         shieldTop = shield.y - SHIELD_LENGTH / 2;
@@ -253,65 +246,42 @@ function checkArrowHeartCollision(arrow) {
     const heartRight = BOX_X + BOX_SIZE;
     const heartTop = BOX_Y;
     const heartBottom = BOX_Y + BOX_SIZE;
-    回転あり）
-    ctx.save();
-    ctx.translate(shield.x, shield.y);
-    ctx.rotate(shield.rotation);
-    ctx.fillStyle = '#00ffff'; // 水色
-    ctx.fillRect(-SHIELD_LENGTH/2, -SHIELD_THICKNESS/2, SHIELD_LENGTH, SHIELD_THICKNESS);
-    ctx.strokeStyle = '#ffffff'; // 白い枠線
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-SHIELD_LENGTH/2, -SHIELD_THICKNESS/2, SHIELD_LENGTH, SHIELD_THICKNESS);
-    ctx.restore();
-
-    // HPバーを描画
-    const hpBarWidth = 200;
-    const hpBarHeight = 20;
-    const hpBarX = canvas.width / 2 - hpBarWidth / 2;
-    const hpBarY = 50;
     
-    // HPバーの背景
-    ctx.fillStyle = '#800000';
-    ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
-    
-    // 現在のHP
-    const hpWidth = (hp / MAX_HP) * hpBarWidth;
-    ctx.fillStyle = '#ffff00'; // 黄色
-    ctx.fillRect(hpBarX, hpBarY, hpWidth, hpBarHeight);
-    
-    // HPバーの枠線
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
-    
-    // HP数値表示
-    ctx.fillStyle = 'white';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${hp} / ${MAX_HP}`, canvas.width / 2, hpBarY - 10);
-    
-    // デバッグ情報を表示
-    ctx.textAlign = 'left';
-    ctx.fillText(`Arrows: ${arrows.length}/${ARROW_COUNT}`, 10, 30);
-    ctx.fillText(`Shield: ${shield.direction}`, 10, 5
-    if (shield.x < boxLeft) shield.x = boxLeft;
-    if (shield.x > boxRight - SHIELD_WIDTH) shield.x = boxRight - SHIELD_WIDTH;
-    if (shield.y < boxTop) shield.y = boxTop;
-    if (shield.y > boxBottom - SHIELD_HEIGHT) shield.y = boxBottom - SHIELD_HEIGHT;
+    // 矢印の中心が箱の内部にあるかチェック
+    return arrow.x > heartLeft && 
+           arrow.x < heartRight && 
+           arrow.y > heartTop && 
+           arrow.y < heartBottom;
 }
 
 // ========================================
 // 矢印の更新処理
 // ========================================
 function updateArrows() {
-    // 各矢印を移動
+    // 各矢印を移動と当たり判定
     arrows.forEach(arrow => {
-        arrow.x += arrow.vx;
-        arrow.y += arrow.vy;
+        if (!arrow.hit) { // まだ処理されていない矢印のみ
+            arrow.x += arrow.vx;
+            arrow.y += arrow.vy;
+            
+            // 盾との当たり判定
+            if (checkArrowShieldCollision(arrow)) {
+                arrow.hit = true; // 盾に当たった
+                arrow.blocked = true;
+            }
+            // ハートとの当たり判定（盾に当たっていない場合）
+            else if (checkArrowHeartCollision(arrow)) {
+                arrow.hit = true; // ハートに当たった
+                arrow.blocked = false;
+                hp -= DAMAGE; // HPを減らす
+                if (hp < 0) hp = 0;
+            }
+        }
     });
 
-    // 画面外に出た矢印を削除
+    // 画面外に出た矢印または当たった矢印を削除
     arrows = arrows.filter(arrow => {
+        if (arrow.hit) return false; // 当たった矢印は削除
         return arrow.x > -ARROW_SIZE * 2 && 
                arrow.x < canvas.width + ARROW_SIZE * 2 &&
                arrow.y > -ARROW_SIZE * 2 && 
@@ -356,17 +326,47 @@ function draw() {
         ctx.drawImage(img, arrow.x - ARROW_SIZE/2, arrow.y - ARROW_SIZE/2, ARROW_SIZE, ARROW_SIZE);
     });
 
-    // 盾を描画（横の棒）
+    // 盾を描画（回転あり）
+    ctx.save();
+    ctx.translate(shield.x, shield.y);
+    ctx.rotate(shield.rotation);
     ctx.fillStyle = '#00ffff'; // 水色
-    ctx.fillRect(shield.x - SHIELD_WIDTH/2, shield.y - SHIELD_HEIGHT/2, SHIELD_WIDTH, SHIELD_HEIGHT);
+    ctx.fillRect(-SHIELD_LENGTH/2, -SHIELD_THICKNESS/2, SHIELD_LENGTH, SHIELD_THICKNESS);
     ctx.strokeStyle = '#ffffff'; // 白い枠線
     ctx.lineWidth = 2;
-    ctx.strokeRect(shield.x - SHIELD_WIDTH/2, shield.y - SHIELD_HEIGHT/2, SHIELD_WIDTH, SHIELD_HEIGHT);
+    ctx.strokeRect(-SHIELD_LENGTH/2, -SHIELD_THICKNESS/2, SHIELD_LENGTH, SHIELD_THICKNESS);
+    ctx.restore();
 
-    // デバッグ情報を表示
+    // HPバーを描画
+    const hpBarWidth = 200;
+    const hpBarHeight = 20;
+    const hpBarX = canvas.width / 2 - hpBarWidth / 2;
+    const hpBarY = 50;
+    
+    // HPバーの背景
+    ctx.fillStyle = '#800000';
+    ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+    
+    // 現在のHP
+    const hpWidth = (hp / MAX_HP) * hpBarWidth;
+    ctx.fillStyle = '#ffff00'; // 黄色
+    ctx.fillRect(hpBarX, hpBarY, hpWidth, hpBarHeight);
+    
+    // HPバーの枠線
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+    
+    // HP数値表示
     ctx.fillStyle = 'white';
     ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${hp} / ${MAX_HP}`, canvas.width / 2, hpBarY - 10);
+    
+    // デバッグ情報を表示
+    ctx.textAlign = 'left';
     ctx.fillText(`Arrows: ${arrows.length}/${ARROW_COUNT}`, 10, 30);
+    ctx.fillText(`Shield: ${shield.direction}`, 10, 50);
 }
 
 // ========================================
