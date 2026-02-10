@@ -12,27 +12,46 @@ const ctx = canvas.getContext('2d');
 // ========================================
 // ゲーム定数の定義
 // ========================================
-const BOX_SIZE = 150; // 戦闘エリアのサイズ
-const BOX_X = canvas.width / 2 - BOX_SIZE / 2;
-const BOX_Y = canvas.height / 2 - BOX_SIZE / 2;
+// 画面レイアウト
+const TOP_AREA_HEIGHT = 150; // 上部エリア（アンダイン）
+const MIDDLE_AREA_HEIGHT = 300; // 中央エリア（戦闘）
+const BOTTOM_AREA_HEIGHT = 150; // 下部エリア（ボタン）
+const MIDDLE_AREA_Y = TOP_AREA_HEIGHT;
+const BOTTOM_AREA_Y = TOP_AREA_HEIGHT + MIDDLE_AREA_HEIGHT;
+
+// 戦闘エリアのサイズ（プレイヤーターン時は長方形、敵ターン時は正方形）
+const BOX_WIDTH_PLAYER = 500; // プレイヤーターン時の幅
+const BOX_HEIGHT_PLAYER = 250; // プレイヤーターン時の高さ
+const BOX_SIZE_ENEMY = 200; // 敵ターン時のサイズ（正方形）
+
+// 現在の戦闘エリアのサイズ（動的に変更）
+let currentBoxWidth = BOX_WIDTH_PLAYER;
+let currentBoxHeight = BOX_HEIGHT_PLAYER;
+let BOX_X = canvas.width / 2 - currentBoxWidth / 2;
+let BOX_Y = MIDDLE_AREA_Y + (MIDDLE_AREA_HEIGHT - currentBoxHeight) / 2;
+
 const HEART_SIZE = 20; // ハートのサイズ
-const SHIELD_LENGTH = 60; // 盾の長さ
+let currentShieldLength = 60; // 盾の長さ（動的に変更）
 const SHIELD_THICKNESS = 12; // 盾の厚さ
 const ARROW_SIZE = 30; // 矢印のサイズ
-const ARROW_SPEED = 3; // 矢印の速度
+const ARROW_SPEED = 4.5; // 矢印の速度
 const ARROW_COUNT = 20; // 矢印の総数
 const CLOSEST_THRESHOLD = 80; // 一番近いと判定する距離
-const MAX_HP = 56; // 最大HP
+const MAX_HP = 56; // プレイヤーの最大HP
 const DAMAGE = 7; // 矢印1回のダメージ
+const UNDYNE_MAX_HP = 27000; // アンダインの最大HP
+const ATTACK_DAMAGE = 1500; // プレイヤーの攻撃ダメージ
 
 // ========================================
 // ゲーム状態の管理
 // ========================================
-let hp = MAX_HP; // 現在のHP
+let gameState = 'player'; // 'player' または 'enemy'
+let hp = MAX_HP; // プレイヤーの現在のHP
+let undyneHp = UNDYNE_MAX_HP; // アンダインの現在のHP
 
 let heart = {
     x: canvas.width / 2,
-    y: canvas.height / 2
+    y: MIDDLE_AREA_Y + MIDDLE_AREA_HEIGHT / 2
 };
 
 // 盾の方向: 'up', 'left', 'down', 'right'
@@ -59,6 +78,29 @@ let keys = {
 let lastKeyPressed = 'w';
 
 // ========================================
+// 戦闘エリアの更新関数
+// ========================================
+function updateBoxSize(isPlayerTurn) {
+    if (isPlayerTurn) {
+        // プレイヤーターン：長方形
+        currentBoxWidth = BOX_WIDTH_PLAYER;
+        currentBoxHeight = BOX_HEIGHT_PLAYER;
+        currentShieldLength = 60; // 通常の盾の長さ
+    } else {
+        // 敵ターン：正方形（盾の幅と同じ）
+        currentBoxWidth = BOX_SIZE_ENEMY;
+        currentBoxHeight = BOX_SIZE_ENEMY;
+        currentShieldLength = BOX_SIZE_ENEMY; // 盾の長さを箱の幅と同じに
+    }
+    BOX_X = canvas.width / 2 - currentBoxWidth / 2;
+    BOX_Y = MIDDLE_AREA_Y + (MIDDLE_AREA_HEIGHT - currentBoxHeight) / 2;
+    
+    // ハートの位置を中央に更新
+    heart.x = BOX_X + currentBoxWidth / 2;
+    heart.y = BOX_Y + currentBoxHeight / 2;
+}
+
+// ========================================
 // 画像リソースの読み込み
 // ========================================
 const images = {
@@ -69,7 +111,12 @@ const images = {
     arrow01: new Image(),   // 左から（近い）
     arrow02: new Image(),   // 下から（近い）
     arrow03: new Image(),   // 右から（近い）
-    arrow04: new Image()    // 上から（近い）
+    arrow04: new Image(),   // 上から（近い）
+    undyne: new Image(),    // アンダイン
+    tatakau: new Image(),   // 戦うボタン
+    koudou: new Image(),    // 行動ボタン
+    aitemu: new Image(),    // アイテムボタン
+    minogasu: new Image()   // 見逃すボタン
 };
 
 images.arrow1.src = '../material/undyne/1.png';
@@ -80,6 +127,61 @@ images.arrow01.src = '../material/undyne/01.png';
 images.arrow02.src = '../material/undyne/02.png';
 images.arrow03.src = '../material/undyne/03.png';
 images.arrow04.src = '../material/undyne/04.png';
+images.undyne.src = '../material/undyne/u1.png';
+images.tatakau.src = '../material/fight/tatakau.jpg';
+images.koudou.src = '../material/fight/koudou.jpg';
+images.aitemu.src = '../material/fight/aitemu.jpg';
+images.minogasu.src = '../material/fight/minogasu.jpg';
+
+// ========================================
+// ボタンのクリック処理
+// ========================================
+canvas.addEventListener('click', (e) => {
+    if (gameState !== 'player') return; // プレイヤーターンのみクリック可能
+    
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    
+    // ボタンの位置とサイズ
+    const buttonWidth = 140;
+    const buttonHeight = 100;
+    const buttonSpacing = (canvas.width - buttonWidth * 4) / 5;
+    const buttonY = BOTTOM_AREA_Y + (BOTTOM_AREA_HEIGHT - buttonHeight) / 2;
+    
+    // tatakauボタンの判定
+    const tatakauX = buttonSpacing;
+    if (clickX >= tatakauX && clickX <= tatakauX + buttonWidth &&
+        clickY >= buttonY && clickY <= buttonY + buttonHeight) {
+        // 攻撃処理
+        undyneHp -= ATTACK_DAMAGE;
+        if (undyneHp < 0) undyneHp = 0;
+        
+        // 敵ターンに移行
+        startEnemyTurn();
+    }
+});
+
+// ========================================
+// 敵ターン開始処理
+// ========================================
+function startEnemyTurn() {
+    gameState = 'enemy';
+    updateBoxSize(false); // 正方形に変形
+    
+    // 矢印をリセット
+    arrows = [];
+    arrowsSpawned = 0;
+    spawnTimer = 0;
+}
+
+// ========================================
+// プレイヤーターン開始処理
+// ========================================
+function startPlayerTurn() {
+    gameState = 'player';
+    updateBoxSize(true); // 長方形に戻す
+}
 
 // ========================================
 // キーボード入力の処理
@@ -116,29 +218,32 @@ function createArrow() {
         blocked: false // 盾でブロックされたか
     };
 
-    // 方向に応じた初期位置と速度を設定
+    // 方向に応じた初期位置と速度を設定（戦闘エリアの中心を基準）
+    const centerX = BOX_X + currentBoxWidth / 2;
+    const centerY = BOX_Y + currentBoxHeight / 2;
+    
     switch(direction) {
         case 1: // 左から右へ
-            arrow.x = -ARROW_SIZE;
-            arrow.y = canvas.height / 2;
+            arrow.x = BOX_X - ARROW_SIZE;
+            arrow.y = centerY;
             arrow.vx = ARROW_SPEED;
             arrow.vy = 0;
             break;
         case 2: // 下から上へ
-            arrow.x = canvas.width / 2;
-            arrow.y = canvas.height + ARROW_SIZE;
+            arrow.x = centerX;
+            arrow.y = BOX_Y + currentBoxHeight + ARROW_SIZE;
             arrow.vx = 0;
             arrow.vy = -ARROW_SPEED;
             break;
         case 3: // 右から左へ
-            arrow.x = canvas.width + ARROW_SIZE;
-            arrow.y = canvas.height / 2;
+            arrow.x = BOX_X + currentBoxWidth + ARROW_SIZE;
+            arrow.y = centerY;
             arrow.vx = -ARROW_SPEED;
             arrow.vy = 0;
             break;
         case 4: // 上から下へ
-            arrow.x = canvas.width / 2;
-            arrow.y = -ARROW_SIZE;
+            arrow.x = centerX;
+            arrow.y = BOX_Y - ARROW_SIZE;
             arrow.vx = 0;
             arrow.vy = ARROW_SPEED;
             break;
@@ -182,23 +287,23 @@ function updateShield() {
     // 最後に押されたキーに基づいて盾の方向を決定
     if (lastKeyPressed === 'w') {
         shield.direction = 'up';
-        shield.x = BOX_X + BOX_SIZE / 2;
+        shield.x = BOX_X + currentBoxWidth / 2;
         shield.y = BOX_Y - SHIELD_THICKNESS / 2;
         shield.rotation = 0; // 横棒
     } else if (lastKeyPressed === 'a') {
         shield.direction = 'left';
         shield.x = BOX_X - SHIELD_THICKNESS / 2;
-        shield.y = BOX_Y + BOX_SIZE / 2;
+        shield.y = BOX_Y + currentBoxHeight / 2;
         shield.rotation = Math.PI / 2; // 90度回転（縦棒）
     } else if (lastKeyPressed === 's') {
         shield.direction = 'down';
-        shield.x = BOX_X + BOX_SIZE / 2;
-        shield.y = BOX_Y + BOX_SIZE + SHIELD_THICKNESS / 2;
+        shield.x = BOX_X + currentBoxWidth / 2;
+        shield.y = BOX_Y + currentBoxHeight + SHIELD_THICKNESS / 2;
         shield.rotation = 0; // 横棒
     } else if (lastKeyPressed === 'd') {
         shield.direction = 'right';
-        shield.x = BOX_X + BOX_SIZE + SHIELD_THICKNESS / 2;
-        shield.y = BOX_Y + BOX_SIZE / 2;
+        shield.x = BOX_X + currentBoxWidth + SHIELD_THICKNESS / 2;
+        shield.y = BOX_Y + currentBoxHeight / 2;
         shield.rotation = Math.PI / 2; // 90度回転（縦棒）
     }
 }
@@ -212,16 +317,16 @@ function checkArrowShieldCollision(arrow) {
     
     if (shield.direction === 'up' || shield.direction === 'down') {
         // 横棒
-        shieldLeft = shield.x - SHIELD_LENGTH / 2;
-        shieldRight = shield.x + SHIELD_LENGTH / 2;
+        shieldLeft = shield.x - currentShieldLength / 2;
+        shieldRight = shield.x + currentShieldLength / 2;
         shieldTop = shield.y - SHIELD_THICKNESS / 2;
         shieldBottom = shield.y + SHIELD_THICKNESS / 2;
     } else {
         // 縦棒
         shieldLeft = shield.x - SHIELD_THICKNESS / 2;
         shieldRight = shield.x + SHIELD_THICKNESS / 2;
-        shieldTop = shield.y - SHIELD_LENGTH / 2;
-        shieldBottom = shield.y + SHIELD_LENGTH / 2;
+        shieldTop = shield.y - currentShieldLength / 2;
+        shieldBottom = shield.y + currentShieldLength / 2;
     }
     
     // 矢印の当たり判定範囲
@@ -243,9 +348,9 @@ function checkArrowShieldCollision(arrow) {
 function checkArrowHeartCollision(arrow) {
     // ハートの当たり判定範囲（箱の内部）
     const heartLeft = BOX_X;
-    const heartRight = BOX_X + BOX_SIZE;
+    const heartRight = BOX_X + currentBoxWidth;
     const heartTop = BOX_Y;
-    const heartBottom = BOX_Y + BOX_SIZE;
+    const heartBottom = BOX_Y + currentBoxHeight;
     
     // 矢印の中心が箱の内部にあるかチェック
     return arrow.x > heartLeft && 
@@ -258,6 +363,8 @@ function checkArrowHeartCollision(arrow) {
 // 矢印の更新処理
 // ========================================
 function updateArrows() {
+    if (gameState !== 'enemy') return; // 敵ターンのみ矢印を更新
+    
     // 各矢印を移動と当たり判定
     arrows.forEach(arrow => {
         if (!arrow.hit) { // まだ処理されていない矢印のみ
@@ -287,6 +394,11 @@ function updateArrows() {
                arrow.y > -ARROW_SIZE * 2 && 
                arrow.y < canvas.height + ARROW_SIZE * 2;
     });
+    
+    // 20回の攻撃が終わったらプレイヤーターンに戻る
+    if (arrowsSpawned >= ARROW_COUNT && arrows.length === 0) {
+        startPlayerTurn();
+    }
 }
 
 // ========================================
@@ -297,10 +409,38 @@ function draw() {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 戦闘エリア（箱）を描画
+    // 上部エリア：アンダインを描画
+    const undyneWidth = 120;
+    const undyneHeight = 120;
+    const undyneX = canvas.width / 2 - undyneWidth / 2;
+    const undyneY = TOP_AREA_HEIGHT / 2 - undyneHeight / 2;
+    ctx.drawImage(images.undyne, undyneX, undyneY, undyneWidth, undyneHeight);
+
+    // 中央エリア：戦闘エリア（長方形または正方形）を描画
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 3;
-    ctx.strokeRect(BOX_X, BOX_Y, BOX_SIZE, BOX_SIZE);
+    ctx.strokeRect(BOX_X, BOX_Y, currentBoxWidth, currentBoxHeight);
+    
+    // プレイヤーターン時はテキストを表示
+    if (gameState === 'player') {
+        ctx.fillStyle = 'white';
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('アンダインが立ちはだかっている！', BOX_X + currentBoxWidth / 2, BOX_Y + currentBoxHeight / 2 - 20);
+        ctx.fillText('どうする？', BOX_X + currentBoxWidth / 2, BOX_Y + currentBoxHeight / 2 + 20);
+    }
+
+    // 下部エリア：ボタンを等間隔で配置
+    const buttonWidth = 140;
+    const buttonHeight = 100;
+    const buttonSpacing = (canvas.width - buttonWidth * 4) / 5;
+    const buttonY = BOTTOM_AREA_Y + (BOTTOM_AREA_HEIGHT - buttonHeight) / 2;
+    
+    // 4つのボタンを描画
+    ctx.drawImage(images.tatakau, buttonSpacing, buttonY, buttonWidth, buttonHeight);
+    ctx.drawImage(images.koudou, buttonSpacing * 2 + buttonWidth, buttonY, buttonWidth, buttonHeight);
+    ctx.drawImage(images.aitemu, buttonSpacing * 3 + buttonWidth * 2, buttonY, buttonWidth, buttonHeight);
+    ctx.drawImage(images.minogasu, buttonSpacing * 4 + buttonWidth * 3, buttonY, buttonWidth, buttonHeight);
 
     // ハート（♡）を描画（緑色）
     ctx.fillStyle = '#00ff00';
@@ -310,8 +450,9 @@ function draw() {
     // 各方向で最も近い矢印を特定
     const closestArrows = getClosestArrowByDirection();
 
-    // 矢印を描画
-    arrows.forEach(arrow => {
+    // 矢印を描画（敵ターンのみ）
+    if (gameState === 'enemy') {
+        arrows.forEach(arrow => {
         const isClosest = closestArrows[arrow.direction] === arrow;
         const dist = getDistance(arrow.x, arrow.y, shield.x, shield.y);
         
@@ -324,24 +465,27 @@ function draw() {
         }
 
         ctx.drawImage(img, arrow.x - ARROW_SIZE/2, arrow.y - ARROW_SIZE/2, ARROW_SIZE, ARROW_SIZE);
-    });
+        });
+    }
 
-    // 盾を描画（回転あり）
-    ctx.save();
-    ctx.translate(shield.x, shield.y);
-    ctx.rotate(shield.rotation);
-    ctx.fillStyle = '#00ffff'; // 水色
-    ctx.fillRect(-SHIELD_LENGTH/2, -SHIELD_THICKNESS/2, SHIELD_LENGTH, SHIELD_THICKNESS);
-    ctx.strokeStyle = '#ffffff'; // 白い枠線
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-SHIELD_LENGTH/2, -SHIELD_THICKNESS/2, SHIELD_LENGTH, SHIELD_THICKNESS);
-    ctx.restore();
+    // 盾を描画（敵ターンのみ）
+    if (gameState === 'enemy') {
+        ctx.save();
+        ctx.translate(shield.x, shield.y);
+        ctx.rotate(shield.rotation);
+        ctx.fillStyle = '#00ffff'; // 水色
+        ctx.fillRect(-currentShieldLength/2, -SHIELD_THICKNESS/2, currentShieldLength, SHIELD_THICKNESS);
+        ctx.strokeStyle = '#ffffff'; // 白い枠線
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-currentShieldLength/2, -SHIELD_THICKNESS/2, currentShieldLength, SHIELD_THICKNESS);
+        ctx.restore();
+    }
 
-    // HPバーを描画
+    // HPバーを描画（中央エリアの左上）
     const hpBarWidth = 200;
     const hpBarHeight = 20;
-    const hpBarX = canvas.width / 2 - hpBarWidth / 2;
-    const hpBarY = 50;
+    const hpBarX = BOX_X + 10;
+    const hpBarY = MIDDLE_AREA_Y + 10;
     
     // HPバーの背景
     ctx.fillStyle = '#800000';
@@ -360,21 +504,19 @@ function draw() {
     // HP数値表示
     ctx.fillStyle = 'white';
     ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${hp} / ${MAX_HP}`, canvas.width / 2, hpBarY - 10);
-    
-    // デバッグ情報を表示
     ctx.textAlign = 'left';
-    ctx.fillText(`Arrows: ${arrows.length}/${ARROW_COUNT}`, 10, 30);
-    ctx.fillText(`Shield: ${shield.direction}`, 10, 50);
+    ctx.fillText(`HP: ${hp} / ${MAX_HP}`, hpBarX, hpBarY - 5);
+    
+    // アンダインのHPを表示
+    ctx.fillText(`Undyne HP: ${undyneHp} / ${UNDYNE_MAX_HP}`, hpBarX, hpBarY + hpBarHeight + 20);
 }
 
 // ========================================
 // ゲームループ
 // ========================================
 function gameLoop() {
-    // 矢印を定期的に生成（全20個まで）
-    if (arrowsSpawned < ARROW_COUNT) {
+    // 矢印を定期的に生成（敵ターンで全20個まで）
+    if (gameState === 'enemy' && arrowsSpawned < ARROW_COUNT) {
         spawnTimer++;
         if (spawnTimer >= 60) { // 約1秒ごと（60フレーム）
             createArrow();
@@ -405,6 +547,7 @@ Object.values(images).forEach(img => {
         imagesLoaded++;
         if (imagesLoaded === totalImages) {
             // すべての画像が読み込まれたらゲーム開始
+            updateBoxSize(true); // 初期状態は長方形
             gameLoop();
         }
     };
