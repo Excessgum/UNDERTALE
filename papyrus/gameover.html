@@ -87,7 +87,9 @@
 
 <body>
     <audio id="bgm" src="../music/gameover.mp3" loop playsinline></audio>
-    <video id="introVideo" class="intro-video" src="../material/died/soulbreak.mp4" autoplay playsinline></video>
+    <!-- ▼▼▼ mp4動画の再生（元に戻す場合はこのコメントを外してください） ▼▼▼ -->
+    <!-- <video id="introVideo" class="intro-video" src="../material/died/soulbreak.mp4" autoplay playsinline></video> -->
+    <!-- ▲▲▲ mp4動画の再生ここまで ▲▲▲ -->
 
     <main class="screen is-hidden">
         <h1 id="gameover" class="gameover-title">GAME<br>OVER</h1>
@@ -114,6 +116,7 @@
         let line2Done = false;
         let enterQueued = false;
 
+        /* ▼▼▼ mp4動画の再生処理（元に戻す場合はこのコメントを外してください） ▼▼▼
         const tryPlayVideo = async () => {
             try {
                 introVideo.muted = false;
@@ -129,6 +132,7 @@
         introVideo.addEventListener("ended", () => {
             introVideo.classList.add("is-hidden");
         });
+        ▲▲▲ mp4動画の再生処理ここまで ▲▲▲ */
 
         const typeText = (el, text, speed = 100) => new Promise((resolve) => {
             let i = 0;
