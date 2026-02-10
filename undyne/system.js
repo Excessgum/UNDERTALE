@@ -66,6 +66,9 @@ let arrows = [];
 let arrowsSpawned = 0;
 let spawnTimer = 0;
 
+// ボタンの選択状態
+let selectedButton = 0; // 0: tatakau, 1: koudou, 2: aitemu, 3: minogasu
+
 // キー入力の状態
 let keys = {
     w: false,
@@ -149,16 +152,14 @@ canvas.addEventListener('click', (e) => {
     const buttonSpacing = (canvas.width - buttonWidth * 4) / 5;
     const buttonY = BOTTOM_AREA_Y + (BOTTOM_AREA_HEIGHT - buttonHeight) / 2;
     
-    // tatakauボタンの判定
-    const tatakauX = buttonSpacing;
-    if (clickX >= tatakauX && clickX <= tatakauX + buttonWidth &&
-        clickY >= buttonY && clickY <= buttonY + buttonHeight) {
-        // 攻撃処理
-        undyneHp -= ATTACK_DAMAGE;
-        if (undyneHp < 0) undyneHp = 0;
-        
-        // 敵ターンに移行
-        startEnemyTurn();
+    // どのボタンがクリックされたか判定
+    for (let i = 0; i < 4; i++) {
+        const buttonX = buttonSpacing * (i + 1) + buttonWidth * i;
+        if (clickX >= buttonX && clickX <= buttonX + buttonWidth &&
+            clickY >= buttonY && clickY <= buttonY + buttonHeight) {
+            executeButtonAction(i);
+            break;
+        }
     }
 });
 
@@ -188,10 +189,28 @@ function startPlayerTurn() {
 // ========================================
 document.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
-    if (keys.hasOwnProperty(key)) {
-        if (!keys[key]) { // キーが新しく押された時のみ
-            keys[key] = true;
-            lastKeyPressed = key;
+    
+    if (gameState === 'player') {
+        // プレイヤーターン時はボタン選択
+        if (key === 'a') {
+            // 左に移動
+            selectedButton--;
+            if (selectedButton < 0) selectedButton = 3;
+        } else if (key === 'd') {
+            // 右に移動
+            selectedButton++;
+            if (selectedButton > 3) selectedButton = 0;
+        } else if (key === 'enter' || key === ' ') {
+            // ボタンを決定
+            executeButtonAction(selectedButton);
+        }
+    } else if (gameState === 'enemy') {
+        // 敵ターン時は盾の操作
+        if (keys.hasOwnProperty(key)) {
+            if (!keys[key]) {
+                keys[key] = true;
+                lastKeyPressed = key;
+            }
         }
     }
 });
@@ -202,6 +221,32 @@ document.addEventListener('keyup', (e) => {
         keys[key] = false;
     }
 });
+
+// ========================================
+// ボタンアクションの実行
+// ========================================
+function executeButtonAction(buttonIndex) {
+    if (gameState !== 'player') return;
+    
+    switch(buttonIndex) {
+        case 0: // tatakau
+            // 攻撃処理
+            undyneHp -= ATTACK_DAMAGE;
+            if (undyneHp < 0) undyneHp = 0;
+            // 敵ターンに移行
+            startEnemyTurn();
+            break;
+        case 1: // koudou
+            // TODO: 行動処理
+            break;
+        case 2: // aitemu
+            // TODO: アイテム処理
+            break;
+        case 3: // minogasu
+            // TODO: 見逃す処理
+            break;
+    }
+}
 
 // ========================================
 // 矢印の生成関数
@@ -436,11 +481,20 @@ function draw() {
     const buttonSpacing = (canvas.width - buttonWidth * 4) / 5;
     const buttonY = BOTTOM_AREA_Y + (BOTTOM_AREA_HEIGHT - buttonHeight) / 2;
     
+    const buttons = [images.tatakau, images.koudou, images.aitemu, images.minogasu];
+    
     // 4つのボタンを描画
-    ctx.drawImage(images.tatakau, buttonSpacing, buttonY, buttonWidth, buttonHeight);
-    ctx.drawImage(images.koudou, buttonSpacing * 2 + buttonWidth, buttonY, buttonWidth, buttonHeight);
-    ctx.drawImage(images.aitemu, buttonSpacing * 3 + buttonWidth * 2, buttonY, buttonWidth, buttonHeight);
-    ctx.drawImage(images.minogasu, buttonSpacing * 4 + buttonWidth * 3, buttonY, buttonWidth, buttonHeight);
+    for (let i = 0; i < 4; i++) {
+        const buttonX = buttonSpacing * (i + 1) + buttonWidth * i;
+        ctx.drawImage(buttons[i], buttonX, buttonY, buttonWidth, buttonHeight);
+        
+        // 選択されているボタンに黄色い枠を描画
+        if (gameState === 'player' && i === selectedButton) {
+            ctx.strokeStyle = '#ffff00'; // 黄色
+            ctx.lineWidth = 4;
+            ctx.strokeRect(buttonX - 2, buttonY - 2, buttonWidth + 4, buttonHeight + 4);
+        }
+    }
 
     // ハート（♡）を描画（緑色）
     ctx.fillStyle = '#00ff00';
