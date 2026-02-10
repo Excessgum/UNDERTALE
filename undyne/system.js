@@ -13,9 +13,9 @@ const ctx = canvas.getContext('2d');
 // ゲーム定数の定義
 // ========================================
 // 画面レイアウト
-const TOP_AREA_HEIGHT = 150; // 上部エリア（アンダイン）
+const TOP_AREA_HEIGHT = 200; // 上部エリア（アンダイン）
 const MIDDLE_AREA_HEIGHT = 300; // 中央エリア（戦闘）
-const BOTTOM_AREA_HEIGHT = 150; // 下部エリア（ボタン）
+const BOTTOM_AREA_HEIGHT = 100; // 下部エリア（ボタン）
 const MIDDLE_AREA_Y = TOP_AREA_HEIGHT;
 const BOTTOM_AREA_Y = TOP_AREA_HEIGHT + MIDDLE_AREA_HEIGHT;
 
@@ -263,32 +263,33 @@ function createArrow() {
         blocked: false // 盾でブロックされたか
     };
 
-    // 方向に応じた初期位置と速度を設定（中央エリア全体を使用）
-    const centerX = BOX_X + currentBoxWidth / 2;
-    const centerY = BOX_Y + currentBoxHeight / 2;
+    // 方向に応じた初期位置と速度を設定（ハートめがけて飛ぶ、遠くから）
+    const heartX = heart.x;
+    const heartY = heart.y;
+    const distance = 400; // 矢印の生成距離
     
     switch(direction) {
-        case 1: // 左から右へ
-            arrow.x = 0;
-            arrow.y = MIDDLE_AREA_Y + Math.random() * MIDDLE_AREA_HEIGHT;
+        case 1: // 左から右へ（ハートめがけて）
+            arrow.x = heartX - distance;
+            arrow.y = heartY;
             arrow.vx = ARROW_SPEED;
             arrow.vy = 0;
             break;
-        case 2: // 下から上へ
-            arrow.x = canvas.width / 2 - 100 + Math.random() * 200;
-            arrow.y = MIDDLE_AREA_Y + MIDDLE_AREA_HEIGHT;
+        case 2: // 下から上へ（ハートめがけて）
+            arrow.x = heartX;
+            arrow.y = heartY + distance;
             arrow.vx = 0;
             arrow.vy = -ARROW_SPEED;
             break;
-        case 3: // 右から左へ
-            arrow.x = canvas.width;
-            arrow.y = MIDDLE_AREA_Y + Math.random() * MIDDLE_AREA_HEIGHT;
+        case 3: // 右から左へ（ハートめがけて）
+            arrow.x = heartX + distance;
+            arrow.y = heartY;
             arrow.vx = -ARROW_SPEED;
             arrow.vy = 0;
             break;
-        case 4: // 上から下へ
-            arrow.x = canvas.width / 2 - 100 + Math.random() * 200;
-            arrow.y = MIDDLE_AREA_Y;
+        case 4: // 上から下へ（ハートめがけて）
+            arrow.x = heartX;
+            arrow.y = heartY - distance;
             arrow.vx = 0;
             arrow.vy = ARROW_SPEED;
             break;
@@ -459,8 +460,8 @@ function draw() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // 上部エリア：アンダインを描画
-    const undyneWidth = 180;
-    const undyneHeight = 180;
+    const undyneWidth = 240;
+    const undyneHeight = 240;
     const undyneX = canvas.width / 2 - undyneWidth / 2;
     const undyneY = TOP_AREA_HEIGHT / 2 - undyneHeight / 2;
     ctx.drawImage(images.undyne, undyneX, undyneY, undyneWidth, undyneHeight);
