@@ -29,15 +29,17 @@
             audio.play().then(function () {
                 audio.muted = false;
             }).catch(function () {
-                // 自動再生がブロックされた場合、最初のクリックで再生
-                document.addEventListener('click', function () {
+                // 自動再生がブロックされた場合、最初のクリックまたはキーボード入力で再生
+                function startAudio() {
                     audio.muted = false;
                     audio.play();
-                }, { once: true });
+                }
+                document.addEventListener('click', startAudio, { once: true });
+                document.addEventListener('keydown', startAudio, { once: true });
             });
         });
     </script>
 
-<h6>Var1.04</h6>
+<h6>Var1.05</h6>
 </body>
 </html>

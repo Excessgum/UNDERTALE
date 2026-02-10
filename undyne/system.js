@@ -34,7 +34,7 @@ const HEART_SIZE = 20; // ハートのサイズ
 let currentShieldLength = 60; // 盾の長さ（動的に変更）
 const SHIELD_THICKNESS = 12; // 盾の厚さ
 const ARROW_SIZE = 30; // 矢印のサイズ
-const ARROW_SPEED = 9; // 矢印の速度
+const ARROW_SPEED = 10.5; // 矢印の速度
 const ARROW_COUNT = 20; // 矢印の総数
 const CLOSEST_THRESHOLD = 80; // 一番近いと判定する距離
 const MAX_HP = 56; // プレイヤーの最大HP
@@ -465,7 +465,31 @@ function draw() {
     const undyneX = canvas.width / 2 - undyneWidth / 2;
     const undyneY = TOP_AREA_HEIGHT / 2 - undyneHeight / 2;
     ctx.drawImage(images.undyne, undyneX, undyneY, undyneWidth, undyneHeight);
-
+    // アンダインのHPバー（u1.pngの下）
+    const undyneHpBarWidth = 300;
+    const undyneHpBarHeight = 20;
+    const undyneHpBarX = canvas.width / 2 - undyneHpBarWidth / 2;
+    const undyneHpBarY = undyneY + undyneHeight + 10;
+    
+    // HPバーの背景
+    ctx.fillStyle = '#800000';
+    ctx.fillRect(undyneHpBarX, undyneHpBarY, undyneHpBarWidth, undyneHpBarHeight);
+    
+    // 現在のHP
+    const undyneHpWidth = (undyneHp / UNDYNE_MAX_HP) * undyneHpBarWidth;
+    ctx.fillStyle = '#00ff00'; // 緑色
+    ctx.fillRect(undyneHpBarX, undyneHpBarY, undyneHpWidth, undyneHpBarHeight);
+    
+    // HPバーの枠線
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(undyneHpBarX, undyneHpBarY, undyneHpBarWidth, undyneHpBarHeight);
+    
+    // HP数値表示
+    ctx.fillStyle = 'white';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Undyne HP: ${undyneHp} / ${UNDYNE_MAX_HP}`, canvas.width / 2, undyneHpBarY - 5);
     // 中央エリア：戦闘エリア（長方形または正方形）を描画
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 3;
@@ -506,6 +530,32 @@ function draw() {
     ctx.font = `${HEART_SIZE}px Arial`;
     ctx.fillText('♡', heart.x - HEART_SIZE/2, heart.y + HEART_SIZE/2);
 
+    // プレイヤーのHPバー（箱とボタンの上）
+    const hpBarWidth = 200;
+    const hpBarHeight = 20;
+    const hpBarX = canvas.width / 2 - hpBarWidth / 2;
+    const hpBarY = BOTTOM_AREA_Y - hpBarHeight - 30; // ボタンの上
+    
+    // HPバーの背景
+    ctx.fillStyle = '#800000';
+    ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+    
+    // 現在のHP
+    const hpWidth = (hp / MAX_HP) * hpBarWidth;
+    ctx.fillStyle = '#ffff00'; // 黄色
+    ctx.fillRect(hpBarX, hpBarY, hpWidth, hpBarHeight);
+    
+    // HPバーの枠線
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+    
+    // HP数値表示
+    ctx.fillStyle = 'white';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`HP: ${hp} / ${MAX_HP}`, canvas.width / 2, hpBarY - 5);
+
     // 各方向で最も近い矢印を特定
     const closestArrows = getClosestArrowByDirection();
 
@@ -539,35 +589,6 @@ function draw() {
         ctx.strokeRect(-currentShieldLength/2, -SHIELD_THICKNESS/2, currentShieldLength, SHIELD_THICKNESS);
         ctx.restore();
     }
-
-    // HPバーを描画（中央エリアの左上）
-    const hpBarWidth = 200;
-    const hpBarHeight = 20;
-    const hpBarX = BOX_X + 10;
-    const hpBarY = MIDDLE_AREA_Y + 10;
-    
-    // HPバーの背景
-    ctx.fillStyle = '#800000';
-    ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
-    
-    // 現在のHP
-    const hpWidth = (hp / MAX_HP) * hpBarWidth;
-    ctx.fillStyle = '#ffff00'; // 黄色
-    ctx.fillRect(hpBarX, hpBarY, hpWidth, hpBarHeight);
-    
-    // HPバーの枠線
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
-    
-    // HP数値表示
-    ctx.fillStyle = 'white';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(`HP: ${hp} / ${MAX_HP}`, hpBarX, hpBarY - 5);
-    
-    // アンダインのHPを表示
-    ctx.fillText(`Undyne HP: ${undyneHp} / ${UNDYNE_MAX_HP}`, hpBarX, hpBarY + hpBarHeight + 20);
 }
 
 // ========================================
