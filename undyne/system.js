@@ -22,7 +22,7 @@ const BOTTOM_AREA_Y = TOP_AREA_HEIGHT + MIDDLE_AREA_HEIGHT;
 // 戦闘エリアのサイズ（プレイヤーターン時は長方形、敵ターン時は正方形）
 const BOX_WIDTH_PLAYER = 500; // プレイヤーターン時の幅
 const BOX_HEIGHT_PLAYER = 250; // プレイヤーターン時の高さ
-const BOX_SIZE_ENEMY = 200; // 敵ターン時のサイズ（正方形）
+const BOX_SIZE_ENEMY = 70; // 敵ターン時のサイズ（正方形、ハート3個分程度）
 
 // 現在の戦闘エリアのサイズ（動的に変更）
 let currentBoxWidth = BOX_WIDTH_PLAYER;
@@ -34,7 +34,7 @@ const HEART_SIZE = 20; // ハートのサイズ
 let currentShieldLength = 60; // 盾の長さ（動的に変更）
 const SHIELD_THICKNESS = 12; // 盾の厚さ
 const ARROW_SIZE = 30; // 矢印のサイズ
-const ARROW_SPEED = 4.5; // 矢印の速度
+const ARROW_SPEED = 3.75; // 矢印の速度
 const ARROW_COUNT = 20; // 矢印の総数
 const CLOSEST_THRESHOLD = 80; // 一番近いと判定する距離
 const MAX_HP = 56; // プレイヤーの最大HP
@@ -93,7 +93,7 @@ function updateBoxSize(isPlayerTurn) {
         // 敵ターン：正方形（盾の幅と同じ）
         currentBoxWidth = BOX_SIZE_ENEMY;
         currentBoxHeight = BOX_SIZE_ENEMY;
-        currentShieldLength = BOX_SIZE_ENEMY; // 盾の長さを箱の幅と同じに
+        currentShieldLength = BOX_SIZE_ENEMY; // 盾の長さを箱の幅と同じに（小さく）
     }
     BOX_X = canvas.width / 2 - currentBoxWidth / 2;
     BOX_Y = MIDDLE_AREA_Y + (MIDDLE_AREA_HEIGHT - currentBoxHeight) / 2;
@@ -426,7 +426,11 @@ function updateArrows() {
                 arrow.hit = true; // ハートに当たった
                 arrow.blocked = false;
                 hp -= DAMAGE; // HPを減らす
-                if (hp < 0) hp = 0;
+                if (hp <= 0) {
+                    hp = 0;
+                    // ゲームオーバー画面に遷移
+                    window.location.href = 'gameover.html';
+                }
             }
         }
     });
