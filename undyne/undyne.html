@@ -22,6 +22,21 @@
     <audio id="bgm" src="../music/undyne.mp3" loop playsinline></audio>
 
 <script src="system.js"></script>
+ <script>
+        // ミュート状態で自動再生 → 再生後にミュート解除（自動再生ブロック対策）
+        window.addEventListener('load', function () {
+            var audio = document.querySelector('audio');
+            audio.play().then(function () {
+                audio.muted = false;
+            }).catch(function () {
+                // 自動再生がブロックされた場合、最初のクリックで再生
+                document.addEventListener('click', function () {
+                    audio.muted = false;
+                    audio.play();
+                }, { once: true });
+            });
+        });
+    </script>
 
 <h6>Var1.03</h6>
 </body>
