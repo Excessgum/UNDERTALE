@@ -33,9 +33,9 @@ let BOX_Y = MIDDLE_AREA_Y + (MIDDLE_AREA_HEIGHT - currentBoxHeight) / 2;
 const HEART_SIZE = 20; // ハートのサイズ
 let currentShieldLength = 60; // 盾の長さ（動的に変更）
 const SHIELD_THICKNESS = 12; // 盾の厚さ
-const ARROW_SIZE = 30; // 矢印のサイズ
-const ARROW_SPEED = 10; // 矢印の速度
-const ARROW_COUNT = 20; // 矢印の総数
+const ARROW_SIZE = 40; // 矢印のサイズ
+const ARROW_SPEED = 18; // 矢印の速度
+const ARROW_COUNT = 35; // 矢印の総数
 const CLOSEST_THRESHOLD = 80; // 一番近いと判定する距離
 const MAX_HP = 56; // プレイヤーの最大HP
 const DAMAGE = 7; // 矢印1回のダメージ
@@ -595,10 +595,10 @@ function draw() {
 // ゲームループ
 // ========================================
 function gameLoop() {
-    // 矢印を定期的に生成（敵ターンで全20個まで）
+    // 矢印を定期的に生成（敵ターンで全35個まで）
     if (gameState === 'enemy' && arrowsSpawned < ARROW_COUNT) {
         spawnTimer++;
-        if (spawnTimer >= 30) { // 約0.5秒ごと（30フレーム）
+        if (spawnTimer >= 18) { // より頻繁に生成（18フレーム）
             createArrow();
             spawnTimer = 0;
         }
